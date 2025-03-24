@@ -1,5 +1,3 @@
-
-
 class DES():
     def __init__(self,message,key):
         self.message=message
@@ -99,12 +97,15 @@ class DES():
         return e_box_table,s_boxes,p_box_table
     
     def string_to_binary(self):
-        binary_representation=""
+        binary_representation = ""
         for char in self.message:
             binary_char=format(ord(char),"08b")
             binary_representation+=binary_char
-            binary_representation=binary_representation[:64]
-        return binary_representation[:64].ljust(64,"0")
+        padding_length=64-(len(binary_representation)%64)
+        if padding_length==64:
+            padding_length=0  
+        padded_binary=binary_representation+'0'*padding_length
+        return padded_binary
         
     
     def binary_to_ascii(self,binary_string):
@@ -118,11 +119,15 @@ class DES():
         return "".join(ip_result)
     
     def key_in_binary(self):
-        binary_representation=""
-        for char in self.key:
-            binary_key=format(ord(char),"08b")
-            binary_representation+=binary_key
-        return binary_representation
+        binary_representation = ""
+        for char in self.message:
+            binary_char=format(ord(char),"08b")
+            binary_representation+=binary_char
+        padding_length=64-(len(binary_representation)%64)
+        if padding_length==64:
+            padding_length=0  
+        padded_binary=binary_representation+'0'*padding_length
+        return padded_binary
     
     def generate_round_keys(self):
         binary_key=self.key_in_binary()
@@ -142,36 +147,75 @@ class DES():
     def encrypt(self):
         binary_message=self.string_to_binary()
         round_keys=self.generate_round_keys()
-        ip_result_string=self.ip_on_binary_representation(binary_message)
-        lpt=ip_result_string[:32]
-        rpt=ip_result_string[32:]
+        encrypted_message=""
+        for i in range(0,len(binary_message),64):
+            block=binary_message[i:i+64]
+            ip_result_string=self.ip_on_binary_representation(block)
+            lpt=ip_result_string[:32]
+            rpt=ip_result_string[32:]
 
-        for round in range(16):
-            expanded_result=[rpt[i-1] for i in self.e_box_table]
-            expanded_result_string="".join(expanded_result)
-            round_key_string=round_keys[round]
+            for round in range(16):
+                expanded_result=[rpt[i-1] for i in self.e_box_table]
+                expanded_result_string="".join(expanded_result)
+                round_key_string=round_keys[round]
+
+                xor_result_string=""
+                for i in range(48):
+                    xor_result_string+=str(int(expanded_result_string[i])^int(round_key_string[i]))
+
+                six_bit_groups=[xor_result_string[i:i+6] for i in range(0,48,6)]
+                s_box_subtituted=""
+                for i in range(8):
+                    row_bits=int(six_bit_groups[i][0]+six_bit_groups[i][-1],2)
+                    col_bits=int(six_bit_groups[i][1:-1],2)
+                    s_value_box=self.s_boxes[i][row_bits][col_bits]
+                    s_box_subtituted+=format(s_value_box,"04b")
+
+                p_box_result=[s_box_subtituted[i-1] for i in self.p_box_table]
+                lpt_list=list(lpt)
+                lpt=rpt
+                rpt="".join([str(int(lpt_list[i])^int(p_box_result[i])) for i in range(32)])
+
+            final_result=rpt+lpt
+            encrypted_message+="".join([final_result[self.ip_inverse_table[i]-1] for i in range(64)])
+        return encrypted_message
+    
+    def decrypt(self,encrypted_message):
+        round_keys=self.generate_round_keys()
+        message=""
+        for i in range(0,len(encrypted_message),64):
+            block=encrypted_message[i:i+64]
+            round_keys=self.generate_round_keys()
+            ip_result_string=self.ip_on_binary_representation(block)
+            lpt=ip_result_string[:32]
+            rpt=ip_result_string[32:]
+    
+            for round in range(16):
+                expanded_result=[rpt[i-1] for i in self.e_box_table]
+                expanded_result_string="".join(expanded_result)
+                round_key_string=round_keys[15-round]
+                
+                xor_result_string=""
+                for i in range(48):
+                    xor_result_string+=str(int(expanded_result_string[i])^int(round_key_string[i]))
+                
+                six_bit_groups=[xor_result_string[i:i+6] for i in range(0,48,6)]
+                s_box_subtituted=""
+                for i in range(8):
+                    row_bits=int(six_bit_groups[i][0]+six_bit_groups[i][-1],2)
+                    col_bits=int(six_bit_groups[i][1:-1],2)
+                    s_value_box=self.s_boxes[i][row_bits][col_bits]
+                    s_box_subtituted+=format(s_value_box,"04b")
+                
+                p_box_result=[s_box_subtituted[i-1] for i in self.p_box_table]
+                lpt_list=list(lpt)
+                lpt=rpt
+                rpt="".join([str(int(lpt_list[i])^int(p_box_result[i])) for i in range(32)])
             
-            xor_result_string=""
-            for i in range(48):
-                xor_result_string+=str(int(expanded_result_string[i])^int(round_key_string[i]))
-            
-            six_bit_groups=[xor_result_string[i:i+6] for i in range(0,48,6)]
-            
-            s_box_subtituted=""
-            for i in range(8):
-                row_bits=int(six_bit_groups[i][0]+six_bit_groups[i][-1],2)
-                col_bits=int(six_bit_groups[i][1:-1],2)
-                s_value_box=self.s_boxes[i][row_bits][col_bits]
-                s_box_subtituted+=format(s_value_box,"04b")
-            p_box_result=[s_box_subtituted[i-1] for i in self.p_box_table]
+            final_result=rpt+lpt
+            message+=''.join([final_result[self.ip_inverse_table[i]-1] for i in range(64)])
+        return self.binary_to_ascii(message)
 
-            lpt_list=list(lpt)
-            new_rpt="".join([str(int(lpt_list[i])^int(p_box_result[i])) for i in range(32)])
-            lpt=rpt
-            rpt=new_rpt
-
-        final_result=rpt+lpt
-        final_cipher=''.join([final_result[self.ip_inverse_table[i]-1] for i in range(64)])
-        return self.binary_to_ascii(final_cipher)
-
-des=DES("Hello, Wolrd!","welcomes")
+# des=DES("Hello, Wolrd!","key")
+# print(des.encrypt())
+# print(des.decrypt(des.encrypt()))
