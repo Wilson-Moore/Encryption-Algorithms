@@ -47,8 +47,7 @@ class RSA:
         return "".join([chr(pow(char,d,n)) for char in encrypted_message])
 
 # rsa=RSA("Hello, World!")
-# print(f"Public Key: {rsa.public_key}")
-# print(f"Private Key: {rsa.private_key}")
-# print(f"Message: {rsa.message}")
-# print(f"Encrypted Message: {rsa.encrypt()}")
-# print(f"decrypted Message: {rsa.decrypt(rsa.encrypt())}")
+# print(rsa.public_key)
+# print(rsa.private_key)
+# print(rsa.encrypt())
+# print(rsa.decrypt(rsa.encrypt()))
