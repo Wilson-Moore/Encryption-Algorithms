@@ -1,7 +1,7 @@
 class Polybius():
     def __init__(self,message,key):
         self.message=message
-        self.key=self.remove_duplicate(key)
+        self.key=self.remove_duplicate(key).lower()
         self.grid=self.create_grid()
 
     def remove_duplicate(self,key):
@@ -31,7 +31,6 @@ class Polybius():
             message+=self.grid[x-1][y-1]
         return message
     
-pb=Polybius("helloworld","key")
-print()
-print(pb.encrypt())
-print(pb.decrypt(pb.encrypt()))
+# pb=Polybius("helloworld","Key")
+# print(pb.encrypt())
+# print(pb.decrypt(pb.encrypt()))

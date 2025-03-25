@@ -106,21 +106,10 @@ class DES():
             padding_length=0  
         padded_binary=binary_representation+'0'*padding_length
         return padded_binary
-        
-    
-    def binary_to_ascii(self,binary_string):
-        return ''.join([chr(int(binary_string[i:i+8],2)) for i in range(0,len(binary_string),8)])
-        
-    
-    def ip_on_binary_representation(self,binary_representation):
-        ip_result=[None]*64
-        for i in range(64):
-            ip_result[i]=binary_representation[self.ip_table[i]-1]
-        return "".join(ip_result)
     
     def key_in_binary(self):
         binary_representation = ""
-        for char in self.message:
+        for char in self.key:
             binary_char=format(ord(char),"08b")
             binary_representation+=binary_char
         padding_length=64-(len(binary_representation)%64)
@@ -128,6 +117,15 @@ class DES():
             padding_length=0  
         padded_binary=binary_representation+'0'*padding_length
         return padded_binary
+        
+    def binary_to_ascii(self,binary_string):
+        return ''.join([chr(int(binary_string[i:i+8],2)) for i in range(0,len(binary_string),8)])
+    
+    def ip_on_binary_representation(self,binary_representation):
+        ip_result=[None]*64
+        for i in range(64):
+            ip_result[i]=binary_representation[self.ip_table[i]-1]
+        return "".join(ip_result)
     
     def generate_round_keys(self):
         binary_key=self.key_in_binary()

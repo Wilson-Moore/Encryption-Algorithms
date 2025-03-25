@@ -2,12 +2,11 @@ import random as rd
 import math as mt
 
 class DH():
-    def __init__(self,message):
+    def __init__(self,message,key):
         self.message=message
-        self.prime=self.generate_prime(1000,2000)
-        self.private_key=rd.randint(2,self.prime-1)
-        self.public_key1,self.public_key2=self.generate_public_keys()
-        self.full_key=self.generate_full_key()
+        self.public_key=self.generate_public_key()
+        self.private_key=self.generate_private_key(key)
+        self.shared_key=self.generate_shared_key()
         
     def is_prime(self,num):
         if num<2:
@@ -23,34 +22,34 @@ class DH():
             prime=rd.randint(min,max)
         return prime
     
-    def calculate_public_key(self,generator):
-        return pow(generator,self.private_key,self.prime)
+    def generate_public_key(self):
+        modulus=self.generate_prime(1000,2000)
+        base=rd.randint(2,modulus-1)
+        return (base,modulus)
 
-    def generate_public_keys(self):
-        generator=rd.randint(2,self.prime-1)
-        public_key1=self.calculate_public_key(generator)
-        generator=rd.randint(2,self.prime-1)
-        public_key2=self.calculate_public_key(generator)
-        return public_key1,public_key2
+    def generate_private_key(self,key):
+        return sum([ord(char) for char in key])
 
-    def generate_partial_key(self):
-        return pow(self.public_key1,self.private_key,self.public_key2)
-
-    def generate_full_key(self):
-        return pow(self.generate_partial_key(),self.private_key,self.public_key2)
+    def generate_intermidate_key(self):
+        base,modulus=self.public_key
+        return pow(base,self.private_key,modulus)
+    
+    def generate_shared_key(self):
+        intermidate_key,modulus=self.generate_intermidate_key(),self.public_key[1]
+        return pow(intermidate_key,self.private_key,modulus)
     
     def encrypt(self):
         encrypted_message=""
         for char in self.message:
-            encrypted_message+=chr(ord(char)+self.full_key)
+            encrypted_message+=chr(ord(char)+self.shared_key)
         return encrypted_message
     
     def decrypt(self, encrypted_message):
         message=""
         for c in encrypted_message:
-            message += chr(ord(c)-self.full_key)
+            message+=chr((ord(c)-self.shared_key))
         return message
 
-# dh=DH("Hello, World!")
+# dh=DH("Hello, World!","key")
 # print(dh.encrypt())
 # print(dh.decrypt(dh.encrypt()))
