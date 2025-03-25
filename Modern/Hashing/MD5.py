@@ -19,7 +19,7 @@ class MD5():
         return ((number<<shift)|(number>>size-shift))
     
     def adjust_message(self):
-        adjusted_message=bytearray(self.message,"ascii")
+        adjusted_message=bytearray(self.message.encode("utf-8"))
         length=(len(adjusted_message)*8)
         adjusted_message.append(0x80)
         while (len(adjusted_message)*8)%512!=448:
@@ -52,10 +52,10 @@ class MD5():
                 A,D,C=D,C,B
                 B=(B+self.rotate_left(F,self.s[i]))&0xFFFFFFFF
 
-            a0=a0+A
-            b0=b0+B
-            c0=c0+C
-            d0=d0+D
+            a0=a0+A&0xFFFFFFFF
+            b0=b0+B&0xFFFFFFFF
+            c0=c0+C&0xFFFFFFFF
+            d0=d0+D&0xFFFFFFFF
         
         return sum(buffer_content<<(32*i) for i,buffer_content in enumerate([a0,b0,c0,d0])).to_bytes(16,'little').hex()
 
