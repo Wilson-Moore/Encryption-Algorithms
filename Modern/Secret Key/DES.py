@@ -221,6 +221,10 @@ class DES():
             message+=''.join([final_result[self.inv_ip_table[i]-1] for i in range(64)])
         return self.binary_to_ascii(message)
 
+<<<<<<< HEAD
 # des=DES("Hello, World!","Key")
+=======
+# des=DES("Hello, Wolrd!","Key")
+>>>>>>> a44fa4a5fac7ec0f026072bee0c80024bc47d6c8
 # print(des.encrypt())
 # print(des.decrypt(des.encrypt()))
