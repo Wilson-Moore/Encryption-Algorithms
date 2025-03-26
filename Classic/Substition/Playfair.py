@@ -97,3 +97,6 @@ class PlayfairCipher:
                 c.append(self.matrice5x5[rowA][colB])
 
         return self.readjust_message("".join(c))
+# pf=Playfair("helloworld","Key")
+# print(pf.encrypt())
+# print(pf.decrypt(pf.encrypt()))
