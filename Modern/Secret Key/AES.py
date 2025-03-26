@@ -1,8 +1,11 @@
 class AES():
     def __init__(self,message,key):
         self.message=message
-        self.key=key
         self.s_box,self.inv_s_box=self.generate_s_boxes()
+        self.r_con=self.generate_r_con()
+        self.rounds_by_key_size={16:10,24:12,32:14}
+        self.n_rounds=self.rounds_by_key_size[len(key.encode())]
+        self.key_matrices=self.expand_key(key.encode())
 
     def generate_s_boxes(self):
         s_box=[0x63,0x7C,0x77,0x7B,0xF2,0x6B,0x6F,0xC5,0x30,0x01,0x67,0x2B,0xFE,0xD7,0xAB,0x76,
@@ -39,17 +42,20 @@ class AES():
                        0xA0,0xE0,0x3B,0x4D,0xAE,0x2A,0xF5,0xB0,0xC8,0xEB,0xBB,0x3C,0x83,0x53,0x99,0x61,
                        0x17,0x2B,0x04,0x7E,0xBA,0x77,0xD6,0x26,0xE1,0x69,0x14,0x63,0x55,0x21,0x0C,0x7D,]
         return s_box,inv_s_box
+    
+    def generate_r_con(self):
+        return [0x00,0x01,0x02,0x04,0x08,0x10,0x20,0x40,
+                0x80,0x1B,0x36,0x6C,0xD8,0xAB,0x4D,0x9A,
+                0x2F,0x5E,0xBC,0x63,0xC6,0x97,0x35,0x6A,
+                0xD4,0xB3,0x7D,0xFA,0xEF,0xC5,0x91,0x39,]
+    
+    def add_padding(self,text):
+        pad_length=16-(len(text)%16)
+        return text+bytes([pad_length]*pad_length)
 
-    def string_to_binary(self):
-        binary_representation = ""
-        for char in self.message:
-            binary_char=format(ord(char),"08b")
-            binary_representation+=binary_char
-        padding_length=128-(len(binary_representation)%128)
-        if padding_length==128:
-            padding_length=0  
-        padded_binary=binary_representation+'0'*padding_length
-        return padded_binary
+    def remove_padding(self,text):
+        pad_length=text[-1]
+        return text[:-pad_length]
     
     def sub_bytes(self,s):
         for i in range(4):
@@ -65,7 +71,6 @@ class AES():
         s[0][1],s[1][1],s[2][1],s[3][1]=s[1][1],s[2][1],s[3][1],s[0][1]
         s[0][2],s[1][2],s[2][2],s[3][2]=s[2][2],s[3][2],s[0][2],s[1][2]
         s[0][3],s[1][3],s[2][3],s[3][3]=s[3][3],s[0][3],s[1][3],s[2][3]
-
 
     def inv_shift_rows(self,s):
         s[0][1],s[1][1],s[2][1],s[3][1]=s[3][1],s[0][1],s[1][1],s[2][1]
@@ -105,4 +110,75 @@ class AES():
             s[i][3]^=v
         self.mix_columns(s)
     
+    def bytes_to_matrix(self,text):
+        return [list(text[i:i+4]) for i in range(0,len(text),4)]
+
+    def matrix_to_bytes(self,matrix):
+        return bytes(sum(matrix,[]))
     
+    def xor(self,a,b):
+        return bytes(i^j for i,j in zip(a,b))
+    
+    def inc(self,a):
+        out=list(a)
+        for i in reversed(range(len(out))):
+            if out[i]==0xFF:
+                out[i]=0
+            else:
+                out[i]+=1
+                break
+        return bytes(out)
+    
+    def expand_key(self,key):
+        key_columns=self.bytes_to_matrix(key)
+        iterations=len(key)//4
+        i=1
+        while len(key_columns)<(self.n_rounds+1)*4:
+            word=list(key_columns[-1])
+
+            if len(key_columns)%iterations==0:
+                word.append(word.pop(0))
+                word=[self.s_box[char] for char in word]
+                word[0]^=self.r_con[i]
+                i+=1
+            elif len(key)==32 and len(key_columns)%iterations==4:
+                word=[self.s_box[char] for char in word]
+            
+            word=self.xor(word,key_columns[-iterations])
+            key_columns.append(word)
+        return [key_columns[4*i:4*(i+1)] for i in range(len(key_columns)//4)]
+    
+    def encrypt(self):
+        state=self.bytes_to_matrix(self.add_padding(self.message.encode()))
+        self.add_round_key(state,self.key_matrices[0])
+
+        for i in range(1,self.n_rounds):
+            self.sub_bytes(state)
+            self.shift_rows(state)
+            self.mix_columns(state)
+            self.add_round_key(state,self.key_matrices[i])
+
+        self.sub_bytes(state)
+        self.shift_rows(state)
+        self.add_round_key(state,self.key_matrices[-1])
+
+        return self.matrix_to_bytes(state).hex()
+
+    def decrypt(self,encrypted_message):
+        state=self.bytes_to_matrix(bytes.fromhex(encrypted_message))
+        self.add_round_key(state,self.key_matrices[-1])
+        self.inv_shift_rows(state)
+        self.inv_sub_bytes(state)
+
+        for i in range(self.n_rounds-1,0,-1):
+            self.add_round_key(state,self.key_matrices[i])
+            self.inv_mix_columns(state)
+            self.inv_shift_rows(state)
+            self.inv_sub_bytes(state)
+
+        self.add_round_key(state,self.key_matrices[0])
+        return self.remove_padding(self.matrix_to_bytes(state)).decode()
+
+# aes=AES("Hello, World!","Welcome Home Boy")
+# print(aes.encrypt())
+# print(aes.decrypt(aes.encrypt()))
