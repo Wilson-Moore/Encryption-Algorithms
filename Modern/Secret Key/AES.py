@@ -57,30 +57,30 @@ class AES():
         pad_length=text[-1]
         return text[:-pad_length]
     
-    def sub_bytes(self,s):
+    def sub_bytes(self,state):
         for i in range(4):
             for j in range(4):
-                s[i][j]=self.s_box[s[i][j]]
+                state[i][j]=self.s_box[state[i][j]]
 
-    def inv_sub_bytes(self,s):
+    def inv_sub_bytes(self,state):
         for i in range(4):
             for j in range(4):
-                s[i][j]=self.inv_s_box[s[i][j]]
+                state[i][j]=self.inv_s_box[state[i][j]]
 
-    def shift_rows(self,s):
-        s[0][1],s[1][1],s[2][1],s[3][1]=s[1][1],s[2][1],s[3][1],s[0][1]
-        s[0][2],s[1][2],s[2][2],s[3][2]=s[2][2],s[3][2],s[0][2],s[1][2]
-        s[0][3],s[1][3],s[2][3],s[3][3]=s[3][3],s[0][3],s[1][3],s[2][3]
+    def shift_rows(self,state):
+        state[0][1],state[1][1],state[2][1],state[3][1]=state[1][1],state[2][1],state[3][1],state[0][1]
+        state[0][2],state[1][2],state[2][2],state[3][2]=state[2][2],state[3][2],state[0][2],state[1][2]
+        state[0][3],state[1][3],state[2][3],state[3][3]=state[3][3],state[0][3],state[1][3],state[2][3]
 
-    def inv_shift_rows(self,s):
-        s[0][1],s[1][1],s[2][1],s[3][1]=s[3][1],s[0][1],s[1][1],s[2][1]
-        s[0][2],s[1][2],s[2][2],s[3][2]=s[2][2],s[3][2],s[0][2],s[1][2]
-        s[0][3],s[1][3],s[2][3],s[3][3]=s[1][3],s[2][3],s[3][3],s[0][3]
+    def inv_shift_rows(self,state):
+        state[0][1],state[1][1],state[2][1],state[3][1]=state[3][1],state[0][1],state[1][1],state[2][1]
+        state[0][2],state[1][2],state[2][2],state[3][2]=state[2][2],state[3][2],state[0][2],state[1][2]
+        state[0][3],state[1][3],state[2][3],state[3][3]=state[1][3],state[2][3],state[3][3],state[0][3]
 
-    def add_round_key(self,s,k):
+    def add_round_key(self,state,k):
         for i in range(4):
             for j in range(4):
-                s[i][j]^=k[i][j]
+                state[i][j]^=k[i][j]
     
     def xtime(self,a):
         if a&0x80:
@@ -96,19 +96,19 @@ class AES():
         a[2]^=t^self.xtime(a[2]^a[3])
         a[3]^=t^self.xtime(a[3]^u)
 
-    def mix_columns(self,s):
+    def mix_columns(self,state):
         for i in range(4):
-            self.mix_column(s[i])
+            self.mix_column(state[i])
 
-    def inv_mix_columns(self,s):
+    def inv_mix_columns(self,state):
         for i in range(4):
-            u=self.xtime(self.xtime(s[i][0]^s[i][2]))
-            v=self.xtime(self.xtime(s[i][1]^s[i][3]))
-            s[i][0]^=u
-            s[i][1]^=v
-            s[i][2]^=u
-            s[i][3]^=v
-        self.mix_columns(s)
+            u=self.xtime(self.xtime(state[i][0]^state[i][2]))
+            v=self.xtime(self.xtime(state[i][1]^state[i][3]))
+            state[i][0]^=u
+            state[i][1]^=v
+            state[i][2]^=u
+            state[i][3]^=v
+        self.mix_columns(state)
     
     def bytes_to_matrix(self,text):
         return [list(text[i:i+4]) for i in range(0,len(text),4)]
@@ -116,18 +116,8 @@ class AES():
     def matrix_to_bytes(self,matrix):
         return bytes(sum(matrix,[]))
     
-    def xor(self,a,b):
+    def xor_bytes(self,a,b):
         return bytes(i^j for i,j in zip(a,b))
-    
-    def inc(self,a):
-        out=list(a)
-        for i in reversed(range(len(out))):
-            if out[i]==0xFF:
-                out[i]=0
-            else:
-                out[i]+=1
-                break
-        return bytes(out)
     
     def expand_key(self,key):
         key_columns=self.bytes_to_matrix(key)
@@ -144,7 +134,7 @@ class AES():
             elif len(key)==32 and len(key_columns)%iterations==4:
                 word=[self.s_box[char] for char in word]
             
-            word=self.xor(word,key_columns[-iterations])
+            word=self.xor_bytes(word,key_columns[-iterations])
             key_columns.append(word)
         return [key_columns[4*i:4*(i+1)] for i in range(len(key_columns)//4)]
     
