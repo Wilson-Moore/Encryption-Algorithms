@@ -73,6 +73,6 @@ class Playfair():
             message+=substitute1+substitute2
         return self.readjust_message(message)
 
-# pf=Playfair("helloworld","key")
+# pf=Playfair("helloworld","Key")
 # print(pf.encrypt())
 # print(pf.decrypt(pf.encrypt()))

@@ -2,7 +2,7 @@ class DES():
     def __init__(self,message,key):
         self.message=message
         self.key=key
-        self.ip_table,self.ip_inverse_table=self.generate_ip_tables()
+        self.ip_table,self.inv_ip_table=self.generate_ip_tables()
         self.pc1_table,self.pc2_table=self.generate_pc_tables()
         self.shift_schedule=self.generate_shift()
         self.e_box_table,self.s_boxes,self.p_box_table=self.generate_boxes()
@@ -16,7 +16,7 @@ class DES():
                   59,51,43,35,27,19,11,3,
                   61,53,45,37,29,21,13,5,
                   63,55,47,39,31,23,15,7]
-        ip_inverse_table=[40,8,48,16,56,24,64,32,
+        inv_ip_table=[40,8,48,16,56,24,64,32,
                           39,7,47,15,55,23,63,31,
                           38,6,46,14,54,22,62,30,
                           37,5,45,13,53,21,61,29,
@@ -24,7 +24,7 @@ class DES():
                           35,3,43,11,51,19,59,27,
                           34,2,42,10,50,18,58,26,
                           33,1,41,9,49,17,57,25]
-        return ip_table,ip_inverse_table
+        return ip_table,inv_ip_table
     
     def generate_pc_tables(self):
         pc1_table=[57,49,41,33,25,17,9,1,
@@ -118,6 +118,12 @@ class DES():
         padded_binary=binary_representation+'0'*padding_length
         return padded_binary
         
+    def binary_to_hex(self,binary_string):
+        return hex(int(binary_string,2))[2:]
+    
+    def hex_to_binary(self, hex_string):
+        return bin(int(hex_string,16))[2:].zfill(len(hex_string)*4)
+    
     def binary_to_ascii(self,binary_string):
         return ''.join([chr(int(binary_string[i:i+8],2)) for i in range(0,len(binary_string),8)])
     
@@ -175,10 +181,11 @@ class DES():
                 rpt="".join([str(int(lpt_list[i])^int(p_box_result[i])) for i in range(32)])
 
             final_result=rpt+lpt
-            encrypted_message+="".join([final_result[self.ip_inverse_table[i]-1] for i in range(64)])
-        return encrypted_message
+            encrypted_message+="".join([final_result[self.inv_ip_table[i]-1] for i in range(64)])
+        return self.binary_to_hex(encrypted_message)
     
     def decrypt(self,encrypted_message):
+        encrypted_message=self.hex_to_binary(encrypted_message)
         round_keys=self.generate_round_keys()
         message=""
         for i in range(0,len(encrypted_message),64):
@@ -211,9 +218,9 @@ class DES():
                 rpt="".join([str(int(lpt_list[i])^int(p_box_result[i])) for i in range(32)])
             
             final_result=rpt+lpt
-            message+=''.join([final_result[self.ip_inverse_table[i]-1] for i in range(64)])
+            message+=''.join([final_result[self.inv_ip_table[i]-1] for i in range(64)])
         return self.binary_to_ascii(message)
 
-# des=DES("Hello, Wolrd!","key")
+# des=DES("Hello, World!","Key")
 # print(des.encrypt())
 # print(des.decrypt(des.encrypt()))
