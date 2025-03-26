@@ -3,7 +3,7 @@ import math as mt
 class Transposition:
     def __init__(self,message,key):
         self.message=message
-        self.key=key.lower()
+        self.key=key.lower() if key else "key"
 
     def encrypt(self):
         message_length=len(self.message)
@@ -52,7 +52,3 @@ class Transposition:
         empty_count=message.count("#")
         
         return message[:-empty_count]
-
-# tr=Transposition("Hello, World!","Key")
-# print(tr.encrypt())
-# print(tr.decrypt(tr.encrypt()))

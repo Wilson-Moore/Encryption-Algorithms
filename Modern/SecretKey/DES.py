@@ -1,7 +1,7 @@
 class DES():
     def __init__(self,message,key):
         self.message=message
-        self.key=key
+        self.key=key if key else "key" 
         self.ip_table,self.ip_inverse_table=self.generate_ip_tables()
         self.pc1_table,self.pc2_table=self.generate_pc_tables()
         self.shift_schedule=self.generate_shift()
@@ -214,6 +214,6 @@ class DES():
             message+=''.join([final_result[self.ip_inverse_table[i]-1] for i in range(64)])
         return self.binary_to_ascii(message)
 
-# des=DES("Hello, Wolrd!","key")
-# print(des.encrypt())
-# print(des.decrypt(des.encrypt()))
+des=DES("Hello, Wolrd!","key")
+print(des.encrypt())
+print(des.decrypt(des.encrypt()))

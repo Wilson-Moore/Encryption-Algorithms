@@ -83,6 +83,3 @@ class SHA256():
 
         return((h0).to_bytes(4,"big")+(h1).to_bytes(4,"big")+(h2).to_bytes(4,"big")+(h3).to_bytes(4,"big")+
                (h4).to_bytes(4,"big")+(h5).to_bytes(4,"big")+(h6).to_bytes(4,"big")+(h7).to_bytes(4,"big")).hex()
-
-# sha256=SHA256("Hello, World!")
-# print(sha256.hash())

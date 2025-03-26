@@ -30,7 +30,3 @@ class Polybius():
             x,y=int(location/10),location%10
             message+=self.grid[x-1][y-1]
         return message
-    
-# pb=Polybius("helloworld","Key")
-# print(pb.encrypt())
-# print(pb.decrypt(pb.encrypt()))
