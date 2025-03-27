@@ -3,13 +3,15 @@ from PyQt6.QtWidgets import (
 )
 import sys
 
-from Classic.Substition.Playfair import PlayfairCipher
+from Classic.Substition.Playfair import Playfair
 from Classic.Substition.Vigenere import Vigenere
 from Classic.Permutation.Polybius import Polybius
 from Classic.Permutation.Transposition import Transposition
 
 from Modern.SecretKey.DES import DES
+from Modern.SecretKey.AES import AES
 from Modern.PublicKey.RSA import RSA
+from Modern.PublicKey.DH import DH
 from Modern.Hashing.MD5 import MD5
 from Modern.Hashing.SHA256 import SHA256
 
@@ -116,8 +118,8 @@ class CryptoX(QWidget):
         key = self.key_area.toPlainText()
 
         if method == "Playfair Cipher":
-            playfaire = PlayfairCipher(key, text)
-            res = playfaire.playfaireEncrypt()
+            playfaire = Playfair(text, key)
+            res = playfaire.encrypt()
         elif method == "Vigenère Cipher":
             vigenere = Vigenere(text, key)
             res = vigenere.encrypt()
@@ -130,6 +132,9 @@ class CryptoX(QWidget):
         elif method == "DES":
             des = DES(text, key)
             res = des.encrypt()
+        elif method == "AES":
+            aes = AES(text, key)
+            res = aes.encrypt()
         elif method == "RSA":
             rsa = RSA(text)
             res = rsa.encrypt()
@@ -151,23 +156,26 @@ class CryptoX(QWidget):
         key = self.key_area.toPlainText()
 
         if method == "Playfair Cipher":
-            playfaire = PlayfairCipher(key, text)
-            res = playfaire.playfaireDecrypt()
+            playfaire = Playfair(text, key)
+            res = playfaire.decrypt(text)
         elif method == "Vigenère Cipher":
             vigenere = Vigenere(text, key)
             res = vigenere.decrypt(text)
         elif method == "Polybius":
             polybius = Polybius(text, key)
-            res = polybius.decrypt()
+            res = polybius.decrypt(text)
         elif method == "Row Column Transposition":
             transposition = Transposition(text, key)
             res = transposition.decrypt(text)
         elif method == "DES":
             des = DES(text, key)
-            res = des.decrypt()
+            res = des.decrypt(text)
+        elif method == "AES":
+            aes = AES(text, key)
+            res = aes.decrypt(text)
         elif method == "RSA":
             rsa = RSA(text)
-            res = rsa.decrypt()
+            res = rsa.decrypt(text)
         else : 
             res = "Selected method not implemented."
 
@@ -176,24 +184,24 @@ class CryptoX(QWidget):
 
     def updateKeyPlaceHolder(self):
         method = self.encryption_dropdown.currentText()
-        if method == "Playfair Cipher":
+        if method in ("Playfair Cipher", "Polybius") :
             self.key_area.setPlaceholderText("Enter Key ( Optionnel ) ...")
-        elif method == "Vigenère Cipher":
-            self.key_area.setPlaceholderText("Enter Key ( key By Default ) ...")
-        elif method == "MD5":
+        elif method in ("Vigenère Cipher","Row Column Transposition") :
+            self.key_area.setPlaceholderText("Enter Key ( Key By Default ) ...")
+        elif method in ("SHA-256", "MD5"):
             self.decrypt_button.setVisible(False)
             self.key_area.setVisible(False)
-        elif method in ("SHA-256", "MD5", "RSA", "Diffie-Hellman"):
+        elif method in ("RSA", "Diffie-Hellman"):
             self.key_area2.setVisible(True)
             self.key_area.setPlaceholderText("Enter The Private Key ...")
             self.key_area2.setPlaceholderText("Enter The Public Key ( Optionnel ) ...")
-        elif method in ("DES", "AES"):
+        elif method == "DES":
             self.key_area.setPlaceholderText("Enter The Private Key ...")
+        elif method == "AES":
+            self.key_area.setPlaceholderText("Enter The Private Key ( Length 16 24 32 Characters Space Included )...")
 
 # Run the application
 app = QApplication(sys.argv)
 window = CryptoX()
 window.show()
 sys.exit(app.exec())
-
-# DES Decryption not working

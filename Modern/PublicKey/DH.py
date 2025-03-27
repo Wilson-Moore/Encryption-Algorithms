@@ -26,10 +26,3 @@ class DH():
     
     def generate_secret_key(self,public_key):
         return pow(public_key,self.private_key,self.modulus)
-
-# modulus=generate_prime(1000,2000)
-# base=rd.randint(2,modulus-1)
-# dh1=DH(base,modulus)
-# dh2=DH(base,modulus)
-# print(f"DH1 public key {dh1.generate_public_key()},DH2 public key {dh2.generate_public_key()}")
-# print(f"DH1 secret key {dh1.generate_secret_key(dh2.generate_public_key())},DH2 secret key {dh2.generate_secret_key(dh1.generate_public_key())}")

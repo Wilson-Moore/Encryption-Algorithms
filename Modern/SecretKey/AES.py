@@ -168,7 +168,3 @@ class AES():
 
         self.add_round_key(state,self.key_matrices[0])
         return self.remove_padding(self.matrix_to_bytes(state)).decode()
-
-# aes=AES("Hello, World!","Welcome Home Boy")
-# print(aes.encrypt())
-# print(aes.decrypt(aes.encrypt()))

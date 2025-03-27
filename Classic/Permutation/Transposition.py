@@ -3,7 +3,7 @@ import math as mt
 class Transposition:
     def __init__(self,message,key):
         self.message=message
-        self.key=key.lower() if key else "key"
+        self.key=key.lower() if key else "Key"
 
     def encrypt(self):
         message_length=len(self.message)

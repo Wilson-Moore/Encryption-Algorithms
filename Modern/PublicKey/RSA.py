@@ -45,7 +45,3 @@ class RSA:
     def decrypt(self,encrypted_message):
         d,n=self.private_key
         return "".join([chr(pow(char,d,n)) for char in encrypted_message])
-
-# rsa=RSA("Hello, World!")
-# print(rsa.encrypt())
-# print(rsa.decrypt(rsa.encrypt()))

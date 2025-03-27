@@ -1,9 +1,6 @@
 class DES():
     def __init__(self,message,key):
         self.message=message
-        self.key=key if key else "key" 
-        self.ip_table,self.ip_inverse_table=self.generate_ip_tables()
-
         self.key=key
         self.ip_table,self.inv_ip_table=self.generate_ip_tables()
         self.pc1_table,self.pc2_table=self.generate_pc_tables()
@@ -20,13 +17,13 @@ class DES():
                   61,53,45,37,29,21,13,5,
                   63,55,47,39,31,23,15,7]
         inv_ip_table=[40,8,48,16,56,24,64,32,
-                          39,7,47,15,55,23,63,31,
-                          38,6,46,14,54,22,62,30,
-                          37,5,45,13,53,21,61,29,
-                          36,4,44,12,52,20,60,28,
-                          35,3,43,11,51,19,59,27,
-                          34,2,42,10,50,18,58,26,
-                          33,1,41,9,49,17,57,25]
+                      39,7,47,15,55,23,63,31,
+                      38,6,46,14,54,22,62,30,
+                      37,5,45,13,53,21,61,29,
+                      36,4,44,12,52,20,60,28,
+                      35,3,43,11,51,19,59,27,
+                      34,2,42,10,50,18,58,26,
+                      33,1,41,9,49,17,57,25]
         return ip_table,inv_ip_table
     
     def generate_pc_tables(self):
@@ -223,7 +220,3 @@ class DES():
             final_result=rpt+lpt
             message+=''.join([final_result[self.inv_ip_table[i]-1] for i in range(64)])
         return self.binary_to_ascii(message)
-
-# des=DES("Hello, World!","Key")
-# print(des.encrypt())
-# print(des.decrypt(des.encrypt()))
