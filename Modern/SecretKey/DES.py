@@ -97,41 +97,31 @@ class DES():
         return e_box_table,s_boxes,p_box_table
     
     def string_to_binary(self):
-        binary_representation = ""
-        for char in self.message:
-            binary_char=format(ord(char),"08b")
-            binary_representation+=binary_char
-        padding_length=64-(len(binary_representation)%64)
-        if padding_length==64:
-            padding_length=0  
-        padded_binary=binary_representation+'0'*padding_length
-        return padded_binary
+        bytes_representation=self.message.encode("utf-8")
+        padding_length=8-(len(bytes_representation)%8)
+        padding_bytes=bytes_representation+bytes([padding_length]*padding_length)
+        return "".join(format(byte,"08b") for byte in padding_bytes)
     
     def key_in_binary(self):
-        binary_representation = ""
-        for char in self.key:
-            binary_char=format(ord(char),"08b")
-            binary_representation+=binary_char
-        padding_length=64-(len(binary_representation)%64)
-        if padding_length==64:
-            padding_length=0  
-        padded_binary=binary_representation+'0'*padding_length
-        return padded_binary
+        key_bytes=self.key.encode("utf-8")
+        key_bytes=key_bytes[:8].ljust(8,b"\x00")
+        return "".join(format(byte,"08b") for byte in key_bytes)
         
     def binary_to_hex(self,binary_string):
-        return hex(int(binary_string,2))[2:]
+        return hex(int(binary_string,2))[2:].zfill(len(binary_string)//4)
     
     def hex_to_binary(self, hex_string):
         return bin(int(hex_string,16))[2:].zfill(len(hex_string)*4)
     
-    def binary_to_ascii(self,binary_string):
-        return ''.join([chr(int(binary_string[i:i+8],2)) for i in range(0,len(binary_string),8)])
+    def binary_to_string(self,binary_string):
+        byte_data=bytearray(int(binary_string[i:i+8],2) for i in range(0,len(binary_string),8))
+        padding_length=byte_data[-1]
+        if all(p==padding_length for p in byte_data[-padding_length:]):
+            byte_data = byte_data[:-padding_length]
+        return byte_data.decode("utf-8")
     
     def ip_on_binary_representation(self,binary_representation):
-        ip_result=[None]*64
-        for i in range(64):
-            ip_result[i]=binary_representation[self.ip_table[i]-1]
-        return "".join(ip_result)
+        return "".join(binary_representation[i-1] for i in self.ip_table)
     
     def generate_round_keys(self):
         binary_key=self.key_in_binary()
@@ -186,7 +176,6 @@ class DES():
     
     def decrypt(self,encrypted_message):
         encrypted_message=self.hex_to_binary(encrypted_message)
-        round_keys=self.generate_round_keys()
         message=""
         for i in range(0,len(encrypted_message),64):
             block=encrypted_message[i:i+64]
@@ -219,4 +208,4 @@ class DES():
             
             final_result=rpt+lpt
             message+=''.join([final_result[self.inv_ip_table[i]-1] for i in range(64)])
-        return self.binary_to_ascii(message)
+        return self.binary_to_string(message)

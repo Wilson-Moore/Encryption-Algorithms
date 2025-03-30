@@ -14,7 +14,7 @@ class SHA256():
                 0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]
     
     def rotate_right(self,number,shift,size=32):
-        return (number>>shift)|(number<<size-shift)
+        return ((number>>shift)|(number<<(size-shift)))&0xFFFFFFFF
 
     def sigma0(self,number):
         return (self.rotate_right(number,7)^self.rotate_right(number,18)^(number>>3))
@@ -35,7 +35,7 @@ class SHA256():
         return (x&y)^(x&z)^(y&z)
     
     def adjust_message(self):
-        adjusted_message=bytearray(self.message,"ascii")
+        adjusted_message=bytearray(self.message,"utf-8")
         length=len(adjusted_message)*8
         adjusted_message.append(0x80)
         while(len(adjusted_message)*8+64)%512!=0:
@@ -53,33 +53,33 @@ class SHA256():
             message_schedule=[]
             for i in range(64):
                 if i<=15:
-                    message_schedule.append(bytes(block[i*4:(i*4)+4]))
+                    message_schedule.append(int.from_bytes(block[i*4:(i*4)+4],"big"))
                 else:
-                    term1=self.sigma1(int.from_bytes(message_schedule[i-2],"big"))
-                    term2=int.from_bytes(message_schedule[i-7],"big")
-                    term3=self.sigma0(int.from_bytes(message_schedule[i-15],"big"))
-                    term4=int.from_bytes(message_schedule[i-16],"big")
-                    schedule=((term1+term2+term3+term4)%pow(2,32)).to_bytes(4,"big")
+                    term1=self.sigma1(message_schedule[i-2])
+                    term2=(message_schedule[i-7])
+                    term3=self.sigma0(message_schedule[i-15])
+                    term4=message_schedule[i-16]
+                    schedule=((term1+term2+term3+term4)&0xFFFFFFFF)
                     message_schedule.append(schedule)
             
             a,b,c,d,e,f,g,h=h0,h1,h2,h3,h4,h5,h6,h7
 
             for i in range(64):
-                t1=((h+self.capsigma1(e)+self.ch(e,f,g)+self.k[i]+int.from_bytes(message_schedule[i],"big"))%pow(2,32))
-                t2=(self.capsigma0(a)+self.maj(a,b,c))%pow(2,32)
+                t1=(h+self.capsigma1(e)+self.ch(e,f,g)+self.k[i]+message_schedule[i])&0xFFFFFFFF
+                t2=(self.capsigma0(a)+self.maj(a,b,c))&0xFFFFFFFF
                 h,g,f=g,f,e
-                e=(d+t1)%pow(2,32)
+                e=(d+t1)&0xFFFFFFFF
                 d,c,b=c,b,a
-                a=(t1+t2)%pow(2,32)
+                a=(t1+t2)&0xFFFFFFFF
             
-            h0=(h0+a)%pow(2,32)
-            h1=(h1+b)%pow(2,32)
-            h2=(h2+c)%pow(2,32)
-            h3=(h3+d)%pow(2,32)
-            h4=(h4+e)%pow(2,32)
-            h5=(h5+f)%pow(2,32)
-            h6=(h6+g)%pow(2,32)
-            h7=(h7+h)%pow(2,32)
+            h0=(h0+a)&0xFFFFFFFF
+            h1=(h1+b)&0xFFFFFFFF
+            h2=(h2+c)&0xFFFFFFFF
+            h3=(h3+d)&0xFFFFFFFF
+            h4=(h4+e)&0xFFFFFFFF
+            h5=(h5+f)&0xFFFFFFFF
+            h6=(h6+g)&0xFFFFFFFF
+            h7=(h7+h)&0xFFFFFFFF
 
         return((h0).to_bytes(4,"big")+(h1).to_bytes(4,"big")+(h2).to_bytes(4,"big")+(h3).to_bytes(4,"big")+
                (h4).to_bytes(4,"big")+(h5).to_bytes(4,"big")+(h6).to_bytes(4,"big")+(h7).to_bytes(4,"big")).hex()
