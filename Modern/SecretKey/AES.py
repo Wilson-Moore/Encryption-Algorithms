@@ -139,32 +139,45 @@ class AES():
         return [key_columns[4*i:4*(i+1)] for i in range(len(key_columns)//4)]
     
     def encrypt(self):
-        state=self.bytes_to_matrix(self.add_padding(self.message.encode()))
-        self.add_round_key(state,self.key_matrices[0])
+        padded_message=self.add_padding(self.message.encode())
+        encrypted_message=b""
 
-        for i in range(1,self.n_rounds):
+        for i in range(0,len(padded_message),16):
+            block=padded_message[i:i+16]
+            state=self.bytes_to_matrix(block)
+            self.add_round_key(state, self.key_matrices[0])
+
+            for i in range(1, self.n_rounds):
+                self.sub_bytes(state)
+                self.shift_rows(state)
+                self.mix_columns(state)
+                self.add_round_key(state,self.key_matrices[i])
+
             self.sub_bytes(state)
             self.shift_rows(state)
-            self.mix_columns(state)
-            self.add_round_key(state,self.key_matrices[i])
+            self.add_round_key(state,self.key_matrices[-1])
 
-        self.sub_bytes(state)
-        self.shift_rows(state)
-        self.add_round_key(state,self.key_matrices[-1])
-
-        return self.matrix_to_bytes(state).hex()
+            encrypted_message+=self.matrix_to_bytes(state)
+        return encrypted_message.hex()
 
     def decrypt(self,encrypted_message):
-        state=self.bytes_to_matrix(bytes.fromhex(encrypted_message))
-        self.add_round_key(state,self.key_matrices[-1])
-        self.inv_shift_rows(state)
-        self.inv_sub_bytes(state)
+        encrypted_bytes=bytes.fromhex(encrypted_message)
+        message=b""
 
-        for i in range(self.n_rounds-1,0,-1):
-            self.add_round_key(state,self.key_matrices[i])
-            self.inv_mix_columns(state)
+        for i in range(0,len(encrypted_bytes),16):
+            block=encrypted_bytes[i:i+16]
+            state=self.bytes_to_matrix(block)
+            self.add_round_key(state,self.key_matrices[-1])
             self.inv_shift_rows(state)
             self.inv_sub_bytes(state)
 
-        self.add_round_key(state,self.key_matrices[0])
-        return self.remove_padding(self.matrix_to_bytes(state)).decode()
+            for i in range(self.n_rounds-1,0,-1):
+                self.add_round_key(state,self.key_matrices[i])
+                self.inv_mix_columns(state)
+                self.inv_shift_rows(state)
+                self.inv_sub_bytes(state)
+
+            self.add_round_key(state,self.key_matrices[0])
+            message+=self.matrix_to_bytes(state)
+
+        return self.remove_padding(message).decode()
