@@ -1,6 +1,6 @@
 class Playfair():
     def __init__(self,message,key):
-        self.message=self.adjust_message(message)
+        self.message=self.adjust_message(message.lower().replace(" ",""))
         self.key=self.remove_duplicate(key)
         self.grid=self.create_grid()
 

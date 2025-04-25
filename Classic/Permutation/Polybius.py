@@ -1,6 +1,6 @@
 class Polybius():
     def __init__(self,message,key):
-        self.message=message
+        self.message=message.lower().replace(" ","")
         self.key=self.remove_duplicate(key).lower()
         self.grid=self.create_grid()
 
